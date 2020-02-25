@@ -1,7 +1,6 @@
 ---
 title: "Denver Crime"
 author: "Matt Majestic"
-date: "February 23, 2020"
 output: html_document
 ---
 
@@ -13,10 +12,12 @@ library(lubridate)
 library(DT)
 library(plotly)
 library(stringr)
-mj_crime <- read.csv("C:/Users/Matt/Desktop/denver_crime/mj_crime.csv",stringsAsFactors = FALSE)
+mj_crime <- read.csv("C:/Users/mmajesti/Desktop/denver_crimes/mj_crime.csv",stringsAsFactors = FALSE)
 neigh_piv <- mj_crime %>% group_by(Year,NEIGHBORHOOD_ID) %>% summarise(Count = n()) %>% spread(Year,Count,fill = 0) 
-offense_chart <- mj_crime %>% select(Year,OFFENSE_TYPE_ID) %>% group_by(Year,OFFENSE_TYPE_ID) %>% summarise(Count = n())
-offense_chart <- offense_chart %>% mutate(Offense = stringr::word(OFFENSE_TYPE_ID,1))
+neigh_piv$total <- neigh_piv %>% select(starts_with("201")) %>% rowSums 
+neigh_piv <- neigh_piv %>% arrange(desc(total))
+offense_chart <- mj_crime %>% select(Year,OFFENSE_TYPE_ID) %>% mutate(Offense = stringr::word(OFFENSE_TYPE_ID,1))  %>% group_by(Year,Offense) %>% summarise(Count = n()) %>% arrange(desc(Count))
+
 ```
 
 ## Marijuana related crimes in Denver
@@ -24,15 +25,24 @@ offense_chart <- offense_chart %>% mutate(Offense = stringr::word(OFFENSE_TYPE_I
 From the **Denver Gov Open Data Catalog**
 
 
-```{r cars}
+```{r cars,warning=FALSE}
 datatable(neigh_piv)
+## Sorted by Total and Grouped by Neighborhood ##
 ```
 
 ## Types of crime over the last 5 years
 
 Plot by crime type
 
-```{r pressure, echo=FALSE}
+```{r pressure,warning=FALSE}
 plot_ly(offense_chart,x=~Year,y=~Count,size=~Count,color =~Offense,type = "scatter")
+## This could use more cleaning of names ##
 ```
 
+## Total Over 5 Years
+
+Pie Chart of the percentage of marijuana related crimes
+
+```{r pie,warning=FALSE}
+plot_ly(offense_chart, labels = ~Offense, values = ~Count, type = 'pie')
+```
